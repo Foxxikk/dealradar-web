@@ -16,6 +16,10 @@ export async function saveImage(key: string, bytes: Uint8Array, contentType = "i
     } as any);
     return url;
   }
+  // na Vercelu je disk read-only – nepadej tiše na zápis na disk, řekni jasně proč
+  if (process.env.VERCEL) {
+    throw new Error("BLOB_READ_WRITE_TOKEN není nastaven – připoj Vercel Blob store a udělej Redeploy.");
+  }
   // lokálně: public/media/... → Next servíruje na /media/...
   const path = join(process.cwd(), "public", cleanKey);
   await mkdir(dirname(path), { recursive: true });

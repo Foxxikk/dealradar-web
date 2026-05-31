@@ -22,6 +22,9 @@ export const FS_CONFIG: SourceConnector = {
   priority: "high",
 };
 
+// Statistiky posledního běhu – aby šly fotky/chyby vidět přímo v odpovědi cronu.
+export const fsStats = { photosSaved: 0, photoErrors: [] as string[] };
+
 function num(env: string | undefined, def: number): number {
   const n = env ? parseInt(env, 10) : NaN;
   return Number.isFinite(n) ? n : def;
@@ -141,15 +144,21 @@ async function enrichWithPdf(rec: ExtractedRecord, delayMs: number): Promise<voi
   pdfDoc.extractedText = parsed.text.slice(0, 4000);
 
   const extId = rec.meta.sourceExternalId ?? uuid();
+  let saved = 0;
   for (let k = 0; k < parsed.images.length; k++) {
     try {
       const url = await saveImage(`media/${extId}/photo_${k}.png`, parsed.images[k].png);
       rec.meta.documents!.push({ title: `Fotografie ${k + 1}`, fileUrl: url, type: "photo" });
+      saved++;
     } catch (e) {
-      console.error(`  [financni-sprava] uložení fotky selhalo: ${(e as Error).message}`);
+      const msg = (e as Error).message;
+      if (fsStats.photoErrors.length < 3) fsStats.photoErrors.push(msg);
+      console.error(`  [financni-sprava] uložení fotky selhalo: ${msg}`);
     }
   }
-  if (parsed.images.length) rec.meta.hasPhoto = true;
+  fsStats.photosSaved += saved;
+  // hasPhoto nastav jen když se fotka OPRAVDU uložila (ne když jen byla v PDF)
+  if (saved > 0) rec.meta.hasPhoto = true;
   await sleep(delayMs);
 }
 
@@ -157,6 +166,8 @@ export async function runFinancniSprava(): Promise<ExtractedRecord[]> {
   const maxPages = num(process.env.FS_MAX_PAGES, 3);
   const maxItems = num(process.env.FS_MAX_ITEMS, 30);
   const delay = num(process.env.FS_DELAY_MS, 500);
+  fsStats.photosSaved = 0;
+  fsStats.photoErrors = [];
 
   const ids: string[] = [];
   for (let page = 1; page <= maxPages && ids.length < maxItems; page++) {

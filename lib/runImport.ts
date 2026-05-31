@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { ensureSchema, getDb } from "./db/client.js";
 import * as s from "./db/schema.js";
-import { FS_CONFIG, runFinancniSprava } from "./connectors/financni-sprava.js";
+import { FS_CONFIG, runFinancniSprava, fsStats } from "./connectors/financni-sprava.js";
 import { normalize } from "./pipeline/normalize.js";
 import { ingest } from "./ingest.js";
 
@@ -12,6 +12,8 @@ export interface ImportSummary {
   merged: number;
   archived: number;
   total: number;
+  photosSaved?: number;
+  photoError?: string;
   error?: string;
 }
 
@@ -60,5 +62,5 @@ export async function runImport(): Promise<ImportSummary> {
   const totalRes: any = await db.execute(sql`SELECT COUNT(*) c FROM listings`);
   const archRes: any = await db.execute(sql`SELECT COUNT(*) c FROM listings WHERE status='ended'`);
   const num = (r: any) => Number((Array.isArray(r) ? r : r.rows)[0].c);
-  return { ok: true, fetched: records.length, created, merged, archived: num(archRes), total: num(totalRes) };
+  return { ok: true, fetched: records.length, created, merged, archived: num(archRes), total: num(totalRes), photosSaved: fsStats.photosSaved, photoError: fsStats.photoErrors[0] };
 }
