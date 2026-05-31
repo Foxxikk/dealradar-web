@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.pgdata/
+public/media/
+.env
+.env.local
+.env*.local
+*.log
+.DS_Store
+next-env.d.ts
