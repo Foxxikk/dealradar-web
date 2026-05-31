@@ -12,7 +12,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="cs">
       <body>
         <header className="topbar">
-          <Link className="logo" href="/">📡 DealRadar</Link>
+          <Link className="logo" href="/">📡 DealRadar <span className="poc">živě</span></Link>
           <nav className="mainnav">
             <Link href="/katalog">Katalog</Link>
             <Link href="/katalog?category=vehicle">Vozidla</Link>
