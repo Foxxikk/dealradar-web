@@ -13,7 +13,7 @@ export async function saveImage(key: string, bytes: Uint8Array, contentType = "i
       token: process.env.BLOB_READ_WRITE_TOKEN,
       addRandomSuffix: false,
       allowOverwrite: true,
-    });
+    } as any);
     return url;
   }
   // lokálně: public/media/... → Next servíruje na /media/...
